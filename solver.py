@@ -26,8 +26,9 @@ def solver_alternate(G):
 
         connected_nodes = nx.dfs_preorder_nodes(T, source=node2)
 
-        print("Connecting ", node, "to", node2)
-        print(node2, "descendants: ", [n for n in connected_nodes])
+        # print("Connecting ", node, "to", node2)
+        [n for n in connected_nodes]
+        # print(node2, "descendants: ", [n for n in connected_nodes])
 
         if node2 is not None and node2 not in list(connected_nodes):
 
@@ -39,13 +40,13 @@ def solver_alternate(G):
 
             # Now, evaluate if there is a shorter, cheaper path from a different vertex.
             for connected_node in list(nx.dfs_preorder_nodes(T, source=node2)):
-                print("    Cheapest path from " + str(connected_node) + ": " + str(apsp[connected_node][0][node]))
+                # print("    Cheapest path from " + str(connected_node) + ": " + str(apsp[connected_node][0][node]))
                 if apsp[connected_node][0][node] < path_cost:
                     shortest_path = apsp[connected_node][1][node]
                     path_cost = apsp[connected_node][0][node]
-                    print("Updating best path to " + str(shortest_path) + ", cost " + str(path_cost))
+                    # print("Updating best path to " + str(shortest_path) + ", cost " + str(path_cost))
 
-            print("Found path via " + str(shortest_path) + " of cost " + str(path_cost))
+            # print("Found path via " + str(shortest_path) + " of cost " + str(path_cost))
 
             # Add all necessary vertices.
             for vertex in shortest_path:
@@ -60,11 +61,11 @@ def solver_alternate(G):
                 #T[origin][terminus]['weight'] = G.get_edge_data(origin, terminus)['weight']
 
         node2 = node
-        print()
+        # print()
 
     current_average = average_pairwise_distance(T)
     last_average = 4000
-    print(current_average)
+    # print(current_average)
 
     # Until adding more edges doesn't improve the average pairwise cost
     while current_average < last_average:
@@ -86,11 +87,11 @@ def solver_alternate(G):
                         #T.remove_edge(node, node2)
                     else:
                         current_average = new_average
-                        print("Adding an edge between", node, "and", node2, "yields average", new_average)
+                        # print("Adding an edge between", node, "and", node2, "yields average", new_average)
 
 
 
-    print("Dominating vertices:", [node for node in T])
+    # print("Dominating vertices:", [node for node in T])
 
     return T
 
@@ -153,8 +154,9 @@ def solve(G):
 
         connected_nodes = nx.dfs_preorder_nodes(T, source=node2)
 
-        print("Connecting ", node, "to", node2)
-        print(node2, "descendants: ", [n for n in connected_nodes])
+        # print("Connecting ", node, "to", node2)
+        [n for n in connected_nodes]
+        # print(node2, "descendants: ", [n for n in connected_nodes])
 
         if node2 is not None and node2 not in list(connected_nodes):
 
@@ -166,13 +168,13 @@ def solve(G):
 
             # Now, evaluate if there is a shorter, cheaper path from a different vertex.
             for connected_node in list(nx.dfs_preorder_nodes(T, source=node2)):
-                print("    Cheapest path from " + str(connected_node) + ": " + str(apsp[connected_node][0][node]))
+                # print("    Cheapest path from " + str(connected_node) + ": " + str(apsp[connected_node][0][node]))
                 if apsp[connected_node][0][node] < path_cost:
                     shortest_path = apsp[connected_node][1][node]
                     path_cost = apsp[connected_node][0][node]
-                    print("Updating best path to " + str(shortest_path) + ", cost " + str(path_cost))
+                    # print("Updating best path to " + str(shortest_path) + ", cost " + str(path_cost))
 
-            print("Found path via " + str(shortest_path) + " of cost " + str(path_cost))
+            # print("Found path via " + str(shortest_path) + " of cost " + str(path_cost))
 
             # Add all necessary vertices.
             for vertex in shortest_path:
@@ -187,12 +189,12 @@ def solve(G):
                 #T[origin][terminus]['weight'] = G.get_edge_data(origin, terminus)['weight']
 
         node2 = node
-        print()
+        # print()
 
 
     current_average = average_pairwise_distance(T)
     last_average = 4000
-    print(current_average)
+    # print(current_average)
 
     # Until adding more edges doesn't improve the average pairwise cost
     while current_average < last_average:

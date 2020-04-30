@@ -11,6 +11,6 @@ if __name__ == "__main__":
         G = read_input_file(f"{input_dir}/{input_path}")
         #T = nx.maximum_spanning_tree(G)
         T = solve(G)
-        print(graph_name + " solved")
+        print(graph_name + " SOLVED")
         # assert is_valid_network(G, T)
         write_output_file(T, f"{output_dir}/{graph_name}.out")

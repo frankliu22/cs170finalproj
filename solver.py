@@ -110,6 +110,8 @@ def solve(G):
     apsp = dict(nx.algorithms.shortest_paths.weighted.all_pairs_dijkstra(G, weight = "weight"))
 
     num_vertices_in_graph = len(list(G.nodes))
+    if (num_vertices_in_graph == 1):
+        return G
 
     for vertex in list(G.nodes):
         total = 0

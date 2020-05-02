@@ -78,7 +78,6 @@ def solve(G):
     dominatingSetPlus = dominatingSet.copy()
     tree_costs = []
     for starting_vertex in dominatingSet:
-        print(starting_vertex)
         T_prime = T.copy()
         connected = {starting_vertex}   # the lightest_vertex (closest in proximity to all others) will be our starting point
         still_to_connect = dominatingSet.copy()
@@ -105,11 +104,9 @@ def solve(G):
             s = shortest_connecting_path[-1]
             still_to_connect.remove(s)
 
-        average_pairwise_distance(T_prime)
         T_prime = endgame_optimization(G,T_prime)
         tree_costs.append((T_prime, average_pairwise_distance(T_prime)))
 
-    print("All tree costs: ")
     print([t[1] for t in tree_costs])
     return min(tree_costs, key = lambda t: t[1])[0]
 

@@ -106,8 +106,7 @@ def solve(G):
 
         T_prime = endgame_optimization(G,T_prime)
         tree_costs.append((T_prime, average_pairwise_distance(T_prime)))
-
-    print([t[1] for t in tree_costs])
+        
     return min(tree_costs, key = lambda t: t[1])[0]
 
 # Here's an example of how to run your solver.

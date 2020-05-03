@@ -1,113 +1,93 @@
 import networkx as nx
+import numpy as np
 from networkx.algorithms.approximation import min_weighted_dominating_set
 from parse import read_input_file, write_output_file
 from utils import is_valid_network, average_pairwise_distance
 import sys
 import os
 
-def endgame_optimization(G,T):
-    """Given the original graph and a proposed solution T, searches neighboring edges to add that could potentially
-    lower the overall cost of the solution tree. Returns final solution tree."""
-    current_average = average_pairwise_distance(T)
+adds = 0
+remove_v = 0
+switch_e = 0
 
-    T_vertices = list(T.nodes)
-    G_vertices = list(G.nodes)
-    corona = [gv for gv in G_vertices if gv not in T_vertices]
+def generate_new_solution(G, T):
+    """With half probability decide to add or remove a vertex. If add a vertex, choose a vertex at random and add one of its
+    neighbors that is not already within the graph. If remove vertex, choose a leaf at random, remove from tree, but only do
+    so if the resulting graph is still a dominating set. Return the resulting solution tree."""
+    global adds, remove_v, switch_e
+    roll = np.random.random()
+    if (roll < 0.33):   # add a vertex
+        tree_vertices = list(T.nodes)
+        rand_vertex = np.random.choice(tree_vertices)
+        rand_neighbors = list(G.adj[rand_vertex])
+        rand_neighbors = [rn for rn in rand_neighbors if rn not in tree_vertices] # ensure candidate neighbors not already inside the tree
+        if not rand_neighbors: # empty list
+            return generate_new_solution(G, T)
+        else:
+            adds += 1
+            chosen = np.random.choice(rand_neighbors)
+            T.add_node(chosen)
+            T.add_edge(chosen, rand_vertex, weight = G.get_edge_data(chosen, rand_vertex)['weight'])
+            return T
 
-    for cv in corona:
-        # Look at all edges leading out of the coronavertex and pick the cheapest one to consider adding.
-        T_vertices = list(T.nodes)
-        cv_neighbors = [n for n in list(G.adj[cv]) if n in T_vertices]
-        cv_edges = [(cn, G.get_edge_data(cv, cn)['weight']) for cn in cv_neighbors]
-        cheapest_edge = min(cv_edges, key = lambda t: t[1])  # can only make one connection from cv into the tree
-        connection_point = cheapest_edge[0]   # identify connection point within tree
-        connection_weight = cheapest_edge[1]
-        if connection_weight < current_average:
-            T.add_node(cv)
-            T.add_edge(cv,connection_point, weight = connection_weight)
-            new_average = average_pairwise_distance(T)
-            if new_average >= current_average:   # uh oh, got heavier
-                T.remove_node(cv)
-            else:
-                current_average = new_average
+    elif (roll < 0.67): # remove a leaf
+        tree_vertices = list(T.nodes)
+        T_leaves = [l for l in tree_vertices if T.degree(l) == 1]
+        np.random.shuffle(T_leaves)
+        for leaf in T_leaves:
+            T_prime = T.copy()
+            T_prime.remove_node(leaf)
+            if is_valid_network(G,T_prime):
+                remove_v += 1
+                return T_prime
+        return generate_new_solution(G,T)
+
+    else: # switch an edge
+        switch_e += 1
+        tree_edges = list(T.edges)
+        rand_index = np.random.choice(len(tree_edges))
+        rand_edge = tree_edges[rand_index]
+        T.remove_edge(rand_edge[0], rand_edge[1])
+        cc = list(nx.connected_components(T))
+        # randomly adding back in an edge to reconnect the two CCs
+        for vertex_a in cc[0]:
+            for vertex_b in cc[1]:
+                if G.has_edge(vertex_a,vertex_b):
+                    T.add_edge(vertex_a, vertex_b, weight = G.get_edge_data(vertex_a, vertex_b)['weight'])
+                    return T
+
+def simulated_annealing(G, T, steps = 10000):
+    """Takes in a possible solution tree T, original graph G, and executes a simulated_annealing procedure.
+    At the conclusion returns the final T. """
+    temp = [steps-i for i in range(steps)]
+    calculate_prob = lambda iteration, delta: np.exp(-1 * delta / temp[iteration])
+    for i in range(steps):
+        T_prime = generate_new_solution(G, T)
+        delta = average_pairwise_distance(T_prime) - average_pairwise_distance(T)
+        if delta < 0:
+            T = T_prime
+        elif np.random.random() < calculate_prob(i,delta):
+            T = T_prime
     return T
 
-def solve(G):
+def solve(G, target):
     """
-    CoronaVertex submission. A true Prim's approach plus endgame optimization.
+    Pure simulated annealing. Start with an arbitrary MST though.
     Args:
         G: networkx.Graph
+
     Returns:
         T: networkx.Graph
     """
-    # The variable defined below, apsp, stands for all pairs shortest paths from calling NetworkX built-in Dijkstra's algorithm.
-    apsp = dict(nx.algorithms.shortest_paths.weighted.all_pairs_dijkstra(G, weight = "weight"))
+    # target = 75
+    output_tree = nx.minimum_spanning_tree(G, weight = 'weight')
+    while True:
+        output_tree =  simulated_annealing(G, output_tree, 100)
+        output_cost = average_pairwise_distance(output_tree)
+        print(output_cost)
+        if (output_cost < target):
+            return output_tree
 
-    num_vertices_in_graph = len(list(G.nodes))
-    if num_vertices_in_graph == 1:
-        return G
-
-    for vertex in list(G.nodes):
-        total = 0
-        for vertex2 in list(G.nodes):
-            total += apsp[vertex][0][vertex2]
-        avg = total / (num_vertices_in_graph - 1)
-        G.nodes[vertex]['avg_distances'] = avg
-
-    dominatingSet = nx.algorithms.approximation.dominating_set.min_weighted_dominating_set(G, weight="avg_distances")
-
-    # Create the graph T and input the dominating set.
-    T = nx.Graph()
-    T.add_nodes_from(dominatingSet)
-
-    # When the graph is fully dominated by one node, the cost is zero.
-    if len(dominatingSet) == 1:
-        return T
-
-    # Identify lightest vertex from which to start Prim's.
-    """lightest_vertex = None
-    shortest_avg_distance = 5000
-    for vertex in dominatingSet:
-        avg_dist = G.nodes[vertex]['avg_distances']
-        if (avg_dist < shortest_avg_distance):
-            lightest_vertex = vertex
-            shortest_avg_distance = avg_dist"""
-
-    # The below variable, dominatingSetPlus, is a set that holds vertices of original dominating set as well as new vertices
-    # we have to add in for the purposes of connectivity. Mirrors all the vertices currently inside T_prime.
-    dominatingSetPlus = dominatingSet.copy()
-    tree_costs = []
-    for starting_vertex in dominatingSet:
-        T_prime = T.copy()
-        connected = {starting_vertex}   # the lightest_vertex (closest in proximity to all others) will be our starting point
-        still_to_connect = dominatingSet.copy()
-        still_to_connect.remove(starting_vertex)
-
-        while len(still_to_connect) > 0:   # while there are still vertices within dominatingSet left to connect
-            shortest_connecting_path = None
-            shortest_connecting_distance = 5000
-            for c in connected:
-                for s in still_to_connect:
-                    candidate_dist = apsp[c][0][s]
-                    if (candidate_dist < shortest_connecting_distance):
-                        shortest_connecting_distance = candidate_dist
-                        shortest_connecting_path = apsp[c][1][s]
-            for vertex in shortest_connecting_path:   # add all the vertices on this shortest path
-                connected.add(vertex)   # connected is a set so duplicates don't matter here
-                if vertex not in dominatingSetPlus:
-                    T_prime.add_node(vertex)
-                    dominatingSetPlus.add(vertex)
-            for i in range(len(shortest_connecting_path) - 1):   # Add all necessary edges along shortest path
-                origin = shortest_connecting_path[i]
-                terminus = shortest_connecting_path[i+1]
-                T_prime.add_edge(origin, terminus, weight=G.get_edge_data(origin, terminus)['weight'])
-            s = shortest_connecting_path[-1]
-            still_to_connect.remove(s)
-
-        T_prime = endgame_optimization(G,T_prime)
-        tree_costs.append((T_prime, average_pairwise_distance(T_prime)))
-        
-    return min(tree_costs, key = lambda t: t[1])[0]
 
 # Here's an example of how to run your solver.
 
@@ -115,12 +95,13 @@ def solve(G):
 # Below for testing one at a time:
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 2
+    assert len(sys.argv) == 3#2
     path = sys.argv[1]
     output_path = "outputs/" + path[7:]
+    target = int(sys.argv[2])
     # print(output_path)
     G = read_input_file(path)
-    T = solve(G)
+    T = solve(G, target)
     assert is_valid_network(G, T)
     print("Average  pairwise distance: {}".format(average_pairwise_distance(T)))
     #print("Num adds " + str(adds))

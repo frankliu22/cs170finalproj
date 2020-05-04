@@ -98,7 +98,7 @@ if __name__ == '__main__':
     assert len(sys.argv) == 3#2
     path = sys.argv[1]
     output_path = "outputs/" + path[7:]
-    target = int(sys.argv[2])
+    target = float(sys.argv[2])
     # print(output_path)
     G = read_input_file(path)
     T = solve(G, target)

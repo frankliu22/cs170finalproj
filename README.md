@@ -1,13 +1,13 @@
 # CS 170 Project Spring 2020
 
 ### Written by Student Authors: ###
-This program can be run using the standard procedure (nothing special).
-For example, to run the algorithm for small-1.in, just call 'python3 solver.py inputs/small-1.in'.
-To run all input files provided, run 'python3 max_st.py'.
-The only other library which we imported for use in this lab was NumPy for randomization tools.
+This program can be run using the standard procedure as detailed below.
+For example, to run the algorithm for input file small-1.in, call 'python3 solver.py inputs/small-1.in'.
+To run the program for all input files provided, run 'python3 max_st.py'.
+The only other library imported for use in this project was NumPy for randomization tools.
 ###
 
-Take a look at the project spec before you get started!
+Please take a look at the project spec (https://cs170.org/assets/project/spec.pdf) to get an idea for the full background behind this project before getting started!
 
 Requirements:
 

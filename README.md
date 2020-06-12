@@ -1,4 +1,4 @@
-# CS 170 Project Spring 2020
+# CS 170 Final Project Spring 2020
 
 ### Written by Student Authors: ###
 This program can be run using the standard procedure as detailed below.
